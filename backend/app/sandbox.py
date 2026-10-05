@@ -112,13 +112,16 @@ def ensure_environment(work_dir: Path, dependencies: list[str], log: StageLogger
     """
     override = os.environ.get("CODELOOP_SANDBOX_PYTHON")
     if override:
-        return Sandbox(Path(override), Isolation.SUBPROCESS)
+        python = Path(override).expanduser()
+        if not python.exists() or not python.is_file():
+            raise RuntimeError(f"CODELOOP_SANDBOX_PYTHON does not resolve to an executable: {override!r}")
+        return Sandbox(python.resolve(), Isolation.SUBPROCESS)
 
     venv = work_dir / "venv"
     python = venv / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
     with _lock_for(venv):
-        if (venv / READY_MARKER).exists():
-            return Sandbox(python, Isolation.SUBPROCESS)
+        if (venv / READY_MARKER).exists() and python.exists() and python.is_file():
+            return Sandbox(python.resolve(), Isolation.SUBPROCESS)
         remove_tree(venv)
         log.info("Creating a fresh virtualenv for the sandbox")
         created = _run([sys.executable, "-m", "venv", str(venv)], INSTALL_TIMEOUT_S, clean_environment())

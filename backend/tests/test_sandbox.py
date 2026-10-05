@@ -131,6 +131,12 @@ def test_the_interpreter_override_skips_building_a_virtualenv(tmp_path):
     assert sandbox.python == Path(sys.executable) and not (tmp_path / "venv").exists()
 
 
+def test_an_invalid_interpreter_override_rejected(tmp_path, monkeypatch):
+    monkeypatch.setenv("CODELOOP_SANDBOX_PYTHON", str(tmp_path / "no-python-here"))
+    with pytest.raises(RuntimeError, match="CODELOOP_SANDBOX_PYTHON"):
+        ensure_environment(tmp_path, ["pytest"], Log())
+
+
 @pytest.mark.skipif(os.environ.get("CODELOOP_SLOW_TESTS") != "1", reason="creates a real virtualenv and needs network (CODELOOP_SLOW_TESTS=1)")
 def test_a_real_fresh_virtualenv_runs_the_tests(tmp_path, monkeypatch):
     monkeypatch.delenv("CODELOOP_SANDBOX_PYTHON")

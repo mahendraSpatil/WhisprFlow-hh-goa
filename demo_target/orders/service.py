@@ -73,7 +73,6 @@ class Inventory:
         self._stock[sku] = current - quantity
         return self._stock[sku]
 
-
 @dataclass(frozen=True)
 class OrderRequest:
     customer: str
